@@ -1,16 +1,16 @@
-### Dependencies
+# Manymo
+
+TODO: Write a gem description
+
+## Dependencies
 
 You will need adb (from the [Android SDK](http://developer.android.com/sdk)) in your PATH.
 
-### Installation (and upgrade)
- 
-```
-curl https://raw.github.com/manymo/manymo/master/manymo-installer | bash
-```
+## Installation
 
-This will install the client into your workspace and add it to your PATH. 
+    $ gem install manymo
 
-### Documentation
+## Usage
 
 ```
 manymo [options] COMMAND [ARGUMENTS]
@@ -27,3 +27,11 @@ Options:
 ```
 
 More documentation is at https://www.manymo.com/pages/documentation/manymo-command-line-tool
+
+## Contributing
+
+1. Fork it
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create new Pull Request
