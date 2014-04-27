@@ -9,12 +9,8 @@ module Manymo
     end
 
     def self.build(cmd, arg0, arg1, body = "")
-      if (cmd == "CNXN")
-        # Temporary hack
-        new(cmd + [arg0, arg1, body.length, 0x00000232, compute_magic(cmd)].pack("V*") + body)
-      else
-        new(cmd + [arg0, arg1, body.length, compute_crc(body), compute_magic(cmd)].pack("V*") + body)
-      end
+      # Should be 0x00000232 for a CNXN packet
+      new(cmd + [arg0, arg1, body.length, 0x00000232, compute_magic(cmd)].pack("V*") + body)
     end
 
     def self.compute_magic(cmd)
@@ -64,9 +60,8 @@ module Manymo
     end
 
     def self.compute_crc(data)
-      crc = Digest::CRC16.new
-      crc.update(data)
-      crc.checksum
+      # Not really a crc32
+      data.bytes.inject{|sum,x| sum + x }
     end
 
     def computed_crc
