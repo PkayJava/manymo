@@ -1,5 +1,9 @@
+require 'faye'
+
 module Manymo
   module ADBTunnel
+    include EM::Deferrable
+
     def initialize(server, tunnel_type, display, password)
       @server = server
       @tunnel_type = tunnel_type
@@ -15,7 +19,7 @@ module Manymo
     end
 
     def log_packet(prefix, pkt)
-      puts prefix + ": " + pkt.to_s
+      #puts prefix + ": " + pkt.to_s
     end
 
     # Packet from local socket out to websocket
@@ -60,10 +64,9 @@ module Manymo
     end
 
     def post_init
-      puts "opening ws wss://#{@server}/#{@tunnel_type}?display=#{@display}&password=#{@password}"
+      #puts "opening ws wss://#{@server}/#{@tunnel_type}?display=#{@display}&password=#{@password}"
       @ws = Faye::WebSocket::Client.new("wss://#{@server}/#{@tunnel_type}?display=#{@display}&password=#{@password}")
       @ws.on :open do
-        puts "Connected"
         @connected = true
         flush
       end
@@ -79,14 +82,18 @@ module Manymo
       end
 
       @ws.on :close do |event|
-        puts "Remote websocket for adb closed: #{event.code}, #{event.reason}"
+        if event.code == 4008
+          self.fail("Authentication failed for adb tunnel.")
+        elsif event.code != 1000
+          self.fail("adb tunnel closed with error code #{event.code}.")
+        end
         @ws = nil
         close_connection
       end  
     end
 
     def unbind
-      puts "unbind (local socket closed)"
+      #puts "unbind (local socket closed)"
       if @ws
         @ws.close
         @ws = nil

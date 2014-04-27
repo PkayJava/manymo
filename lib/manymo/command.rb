@@ -19,7 +19,6 @@ manymo [options] COMMAND [ARGUMENTS]
 Commands:
         launch EMULATORNAME          Launch a headless emulator and make it appear like a local device
         list                         List emulators; use the name attribute with the launch command
-        shutdown [SERIALNUMBER]      Shutdown specified headless emulator or tunnel, or all if serial number omitted 
         token                        Display a prompt to enter authorization token
         tunnel TUNNELKEY             Make an in-browser emulator appear like a local device
 
@@ -52,7 +51,7 @@ EOT
         when /tunnel/
           args = @argv[1].split(':')
           if args.count == 3
-            tunnel(*args)
+            start_tunnel(args[0], args[1], args[2])
           else
             usage
           end
@@ -64,8 +63,6 @@ EOT
           else
             usage
           end
-        when /shutdown/
-          shutdown(@argv[1])
         when /version/
           puts "Version #{CLIENT_VERSION}"
         else
@@ -85,19 +82,23 @@ EOT
       def launch(name)
         hostname, emulator_console_port, password = get("/emulators/launch_emulator/#{name}").split(":")
         #puts "Tunnel is #{hostname}:#{emulator_console_port}:#{password}"
-        local_port = tunnel(hostname, emulator_console_port, password, true)
-        puts "Emulator launched; local serial number is: localhost:#{local_port + 1}"    
+        start_tunnel(hostname, emulator_console_port, password)
       end
 
       def start_tunnel(server, port, password)
-        tunnel = Tunnel.new(server, port, password)
-        serial_number = tunnel.start
-        if serial_number
-          puts "Tunnel established; local serial number is: " unless silent
-        else
-          STDERR.puts "Error launching tunnel to emulator."
-          exit 1
-        end
+        EM.run {
+          # hit Control + C to stop
+          Signal.trap("INT")  { EventMachine.stop }
+          Signal.trap("TERM") { EventMachine.stop }
+          tunnel = Tunnel.new(server, port, password, @adb)
+          tunnel.callback {
+            puts "Tunnel established; local serial number is: " + tunnel.serial_number
+          }
+          tunnel.errback{ |message|
+            STDERR.puts message
+            exit 1
+          }
+        }
       end
     end
   end

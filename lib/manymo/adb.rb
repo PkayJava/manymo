@@ -6,6 +6,10 @@ module Manymo
       @path = path
     end
 
+    def path
+      @path || 'adb'
+    end
+
     def ensure_available
       if @path
         if !File.exists?(@path)

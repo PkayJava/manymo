@@ -1,4 +1,4 @@
-require 'zlib'
+require 'digest/crc16'
 
 module Manymo
   class ADBPacket
@@ -9,7 +9,12 @@ module Manymo
     end
 
     def self.build(cmd, arg0, arg1, body = "")
-      new(cmd + [arg0, arg1, body.length, compute_crc(body), compute_magic(cmd)].pack("V*") + body)
+      if (cmd == "CNXN")
+        # Temporary hack
+        new(cmd + [arg0, arg1, body.length, 0x00000232, compute_magic(cmd)].pack("V*") + body)
+      else
+        new(cmd + [arg0, arg1, body.length, compute_crc(body), compute_magic(cmd)].pack("V*") + body)
+      end
     end
 
     def self.compute_magic(cmd)
@@ -59,7 +64,9 @@ module Manymo
     end
 
     def self.compute_crc(data)
-      Zlib::crc32(data)
+      crc = Digest::CRC16.new
+      crc.update(data)
+      crc.checksum
     end
 
     def computed_crc
