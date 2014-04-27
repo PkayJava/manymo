@@ -61,7 +61,7 @@ module Manymo
 
     def self.compute_crc(data)
       # Not really a crc32
-      data.bytes.inject{|sum,x| sum + x }
+      data.bytes.inject{|sum,x| sum + x } || 0
     end
 
     def computed_crc
@@ -81,7 +81,7 @@ module Manymo
     end
 
     def hex_str(v)
-      "0x%08x" % v
+      "0x%08x" % v unless v.nil?
     end
 
     def to_s

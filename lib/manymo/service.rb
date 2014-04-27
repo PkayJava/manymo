@@ -58,10 +58,10 @@ module Manymo
           STDERR.puts "Error #{response.code}: #{response.body}"
           exit 1
         end
-      rescue SystemExit
+      rescue SystemExit, Interrupt
         exit 1
-      rescue Exception
-        STDERR.puts "Error: #{$!}"
+      rescue Exception => e
+        STDERR.puts "Error: #{e.inspect}"
         STDERR.puts "Please check that your network is connected and that no firewall rules are blocking #{uri.scheme} requests."
         exit 1
       end    

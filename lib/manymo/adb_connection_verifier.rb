@@ -26,7 +26,7 @@ module Manymo
       end
 
       def unbind
-        @verifier.fail("Could not connect to adb over tunnel.")
+        #@verifier.fail("Could not connect to adb over tunnel.")
       end
     end
 
