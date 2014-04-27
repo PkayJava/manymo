@@ -2,9 +2,8 @@ require "net/https"
 require "uri"
 
 module Manymo
-  module API
+  class Service
     BASE_URL="https://www.manymo.com/api/v1"
-
     def get_auth_token(force = false)
       manymo_config_dir = File.expand_path('~/.manymo')
       auth_token_path = manymo_config_dir + '/auth_token'
@@ -32,41 +31,40 @@ module Manymo
         return auth_token
       end
     end
-  end
 
-  def get(endpoint)
-    auth_token = get_auth_token
-    #puts "Auth token: #{auth_token}"
-    uri = URI.parse(API_BASE_URL + endpoint)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-    if uri.scheme == 'https'
-      http.use_ssl = true
-    end
-    
-    request = Net::HTTP::Get.new(uri.request_uri)
-    request["Authorization"] = "OAuth token=#{auth_token}"
-    request["Accept"] = "text/plain"
-    
-    begin
-      response = http.request(request)
-      if response.code.to_i / 100 == 2
-        response.body
-      elsif response.code.to_i == 401
-        puts "Invalid authorization token."
-        get_auth_token(true)
-        get(endpoint)
-      else
-        STDERR.puts "Error #{response.code}: #{response.body}"
-        exit 1
+    def get(endpoint)
+      auth_token = get_auth_token
+      #puts "Auth token: #{auth_token}"
+      uri = URI.parse(BASE_URL + endpoint)
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      if uri.scheme == 'https'
+        http.use_ssl = true
       end
-    rescue SystemExit
-      exit 1
-    rescue Exception
-      STDERR.puts "Error: #{$!}"
-      STDERR.puts "Please check that your network is connected and that no firewall rules are blocking #{uri.scheme} requests."
-      exit 1
-    end    
+      
+      request = Net::HTTP::Get.new(uri.request_uri)
+      request["Authorization"] = "OAuth token=#{auth_token}"
+      request["Accept"] = "text/plain"
+      
+      begin
+        response = http.request(request)
+        if response.code.to_i / 100 == 2
+          response.body
+        elsif response.code.to_i == 401
+          puts "Invalid authorization token."
+          get_auth_token(true)
+          get(endpoint)
+        else
+          STDERR.puts "Error #{response.code}: #{response.body}"
+          exit 1
+        end
+      rescue SystemExit
+        exit 1
+      rescue Exception
+        STDERR.puts "Error: #{$!}"
+        STDERR.puts "Please check that your network is connected and that no firewall rules are blocking #{uri.scheme} requests."
+        exit 1
+      end    
+    end
   end
-
 end
