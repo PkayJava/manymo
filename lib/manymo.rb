@@ -8,4 +8,5 @@ require "manymo/console_tunnel"
 require "manymo/command"
 require "manymo/service"
 require "manymo/tunnel"
+require "manymo/tunnel_close_event"
 

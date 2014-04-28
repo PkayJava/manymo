@@ -2,11 +2,9 @@ require 'faye'
 
 module Manymo
   module ADBTunnel
-    include EM::Deferrable
 
-    def initialize(server, tunnel_type, display, password)
+    def initialize(server, display, password)
       @server = server
-      @tunnel_type = tunnel_type
       @display = display
       @password = password
       @connected = false
@@ -18,8 +16,12 @@ module Manymo
       @peer_port, @peer_ip = Socket.unpack_sockaddr_in(get_peername)
     end
 
+    def onclose(&blk)
+      @onclose = blk
+    end
+
     def log_packet(prefix, pkt)
-      #puts prefix + ": " + pkt.to_s
+      puts prefix + ": " + pkt.to_s
     end
 
     # Packet from local socket out to websocket
@@ -64,8 +66,8 @@ module Manymo
     end
 
     def post_init
-      #puts "opening ws wss://#{@server}/#{@tunnel_type}?display=#{@display}&password=#{@password}"
-      @ws = Faye::WebSocket::Client.new("wss://#{@server}/#{@tunnel_type}?display=#{@display}&password=#{@password}")
+      #puts "opening ws wss://#{@server}/adb_tunnel?display=#{@display}&password=#{@password}"
+      @ws = Faye::WebSocket::Client.new("wss://#{@server}/adb_tunnel?display=#{@display}&password=#{@password}", nil, {ping: 10})
       @ws.on :open do
         @connected = true
         flush
@@ -82,18 +84,23 @@ module Manymo
       end
 
       @ws.on :close do |event|
-        if event.code == 4008
-          self.fail("Authentication failed for adb tunnel.")
-        elsif event.code != 1000
-          self.fail("adb tunnel closed with error code #{event.code}.")
+        if @onclose
+          close_event = TunnelCloseEvent.new(:websocket)
+          close_event.websocket_event = event
+          @onclose.call(close_event)
+          @onclose = nil
         end
-        @ws = nil
         close_connection
       end  
     end
 
     def unbind
-      #puts "unbind (local socket closed)"
+      if @onclose
+        close_event = TunnelCloseEvent.new(:local)
+        @onclose.call(close_event)
+        @onclose = nil
+      end
+
       if @ws
         @ws.close
         @ws = nil

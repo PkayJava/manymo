@@ -3,7 +3,7 @@ require "uri"
 
 module Manymo
   class Service
-    BASE_URL="https://www.manymo.com/api/v1"
+    BASE_URL="https://devwww.manymo.com/api/v1"
     def get_auth_token(force = false)
       manymo_config_dir = File.expand_path('~/.manymo')
       auth_token_path = manymo_config_dir + '/auth_token'

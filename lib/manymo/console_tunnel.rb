@@ -1,18 +1,20 @@
 module Manymo
   module ConsoleTunnel
-    include EM::Deferrable    
-    def initialize(server, tunnel_type, display, password)
+    def initialize(server, display, password)
       @server = server
-      @tunnel_type = tunnel_type
       @display = display
       @password = password
       @connected = false
       @q = []
     end
 
+    def onclose(&blk)
+      @onclose = blk
+    end
+
     def post_init
-      #puts "opening ws wss://#{@server}/#{@tunnel_type}?display=#{@display}&password=#{@password}"
-      @ws = Faye::WebSocket::Client.new("wss://#{@server}/#{@tunnel_type}?display=#{@display}&password=#{@password}")
+      #puts "opening ws wss://#{@server}/console_tunnel?display=#{@display}&password=#{@password}"
+      @ws = Faye::WebSocket::Client.new("wss://#{@server}/console_tunnel?display=#{@display}&password=#{@password}")
       @ws.on :open do
         @connected = true
         flush
@@ -24,10 +26,11 @@ module Manymo
       end
 
       @ws.on :close do |event|
-        if event.code == 4008
-          self.fail("Authentication failed for console tunnel.")
-        elsif event.code != 1000
-          self.fail("console tunnel closed with error code #{event.code}.")
+        if @onclose
+          close_event = TunnelCloseEvent.new(:websocket)
+          close_event.websocket_event = event
+          @onclose.call(close_event)
+          @onclose = nil
         end
         @ws = nil
         close_connection
@@ -35,6 +38,11 @@ module Manymo
     end
 
     def unbind
+      if @onclose
+        close_event = TunnelCloseEvent.new(:local)
+        @onclose.call(close_event)
+        @onclose = nil
+      end
       if @ws
         @ws.close
         @ws = nil

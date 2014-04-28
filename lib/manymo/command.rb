@@ -64,7 +64,7 @@ EOT
             usage
           end
         when /version/
-          puts "Version #{CLIENT_VERSION}"
+          puts "Version #{Manymo::VERSION}"
         else
           usage
         end
@@ -80,9 +80,9 @@ EOT
       end
 
       def launch(name)
-        hostname, emulator_console_port, password = @service.get("/emulators/launch_emulator/#{name}").split(":")
-        puts "Tunnel is #{hostname}:#{emulator_console_port}:#{password}"
-        start_tunnel(hostname, emulator_console_port, password)
+          hostname, emulator_console_port, password = @service.get("/emulators/launch_emulator/#{name}").split(":")
+          puts "Tunnel is #{hostname}:#{emulator_console_port}:#{password}"
+          start_tunnel(hostname, emulator_console_port, password)
       end
 
       def start_tunnel(server, port, password)
@@ -91,9 +91,6 @@ EOT
           Signal.trap("INT")  { EventMachine.stop }
           Signal.trap("TERM") { EventMachine.stop }
           tunnel = Tunnel.new(server, port, password, @adb)
-          tunnel.callback {
-            puts "Tunnel established; local serial number is: " + tunnel.serial_number
-          }
           tunnel.errback{ |message|
             STDERR.puts message
             exit 1

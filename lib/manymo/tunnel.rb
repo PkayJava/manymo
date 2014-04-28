@@ -9,6 +9,7 @@ module Manymo
     attr_accessor :serial_number
 
     def initialize(server, port, password, adb)
+      @shutdown = false
       @server = server
       @port = port
       @password = password
@@ -17,6 +18,7 @@ module Manymo
       EM::next_tick {
         start
       }
+      @adb_tunnels = []
     end
 
     def lockfile_for_port(port)
@@ -63,40 +65,65 @@ module Manymo
     end
 
     def start_tunnels_with_local_port(local_port)
-      EventMachine::start_server '0.0.0.0', local_port, ConsoleTunnel, @server, "console_tunnel", @display, @password do |tunnel|
-        tunnel.errback { |error|
-          self.fail(error)
+      #puts "Starting tunnels for #{local_port}"
+      EventMachine::start_server '0.0.0.0', local_port, ConsoleTunnel, @server, @display, @password do |tunnel|
+        tunnel.onclose { |event|
+          if event.authorization_denied?
+            self.fail("Authorization denied for console connection.")
+          end
         }
       end
-      EventMachine::start_server '0.0.0.0', local_port+1, ADBTunnel, @server, "adb_tunnel", @display, @password do |tunnel|
-        tunnel.errback { |error|
-          self.fail(error)
+      EventMachine::start_server '0.0.0.0', local_port+1, ADBTunnel, @server, @display, @password do |tunnel|
+        @adb_tunnels << tunnel
+        tunnel.onclose { |event|
+          puts "adb closed: #{event}"
+          @adb_tunnels.delete(tunnel)
+          if event.authorization_denied?
+            shutdown("Authorization denied for adb connection.")
+          elsif @adb_tunnels.empty? && !@shutdown
+            # retry
+            puts "adb tunnel closed. retrying..."
+            connect_emulator_to_adb_server(local_port)
+          end
         }
       end
+      connect_emulator_to_adb_server(local_port)
 
-      connection_verifier = ADBConnectionVerifier.new(local_port)
+      @timeout_timer = EM::Timer.new(15) do 
+        shutdown("Timed out attempting to connect to emulator.")
+      end
+    end
+
+    def connect_emulator_to_adb_server(port)
+      connection_verifier = ADBConnectionVerifier.new(port)
       connection_verifier.callback {
-        @serial_number = "emulator-#{local_port}"
+        @serial_number = "emulator-#{port}"
 
         # This will start adb server if it isn't started
-        listed = is_device_listed?(local_port)
+        listed = is_device_listed?(port)
 
         if !listed
           s = TCPSocket.open('localhost', 5037)
-          s.puts("0012host:emulator:#{local_port+1}")
+          s.puts("0012host:emulator:#{port+1}")
           # Check again
-          listed = is_device_listed?(local_port)
+          listed = is_device_listed?(port)
         end
 
         if listed
-          self.succeed
+          @timeout_timer.cancel if @timeout_timer
+          puts "Tunnel established; local serial number is: " + @serial_number
         else
-          self.fail("Tunnel set up successfully, but was unable to notify adb server.")
+          shutdown("Error connecting emulator to adb server.")
         end        
       }
       connection_verifier.errback {
-        self.fail("Could not connect to adb over tunnel.")
+        shutdown("Error connecting to emulator emulator.")
       }
+    end
+
+    def shutdown(reason)
+      @shutdown = true
+      self.fail(reason)
     end
 
     def start
