@@ -89,7 +89,7 @@ module Manymo
       end
       connect_emulator_to_adb_server(local_port)
 
-      @timeout_timer = EM::Timer.new(15) do 
+      @timeout_timer = EM::Timer.new(50) do 
         shutdown("Timed out attempting to connect to emulator.")
       end
     end

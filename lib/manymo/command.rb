@@ -81,7 +81,6 @@ EOT
 
       def launch(name)
           hostname, emulator_console_port, password = @service.get("/emulators/launch_emulator/#{name}").split(":")
-          puts "Tunnel is #{hostname}:#{emulator_console_port}:#{password}"
           start_tunnel(hostname, emulator_console_port, password)
       end
 
@@ -90,7 +89,12 @@ EOT
           # hit Control + C to stop
           Signal.trap("INT")  { EventMachine.stop }
           Signal.trap("TERM") { EventMachine.stop }
+          EM
           tunnel = Tunnel.new(server, port, password, @adb)
+
+          EM.add_shutdown_hook {
+            tunnel.shutdown("Process terminated")
+          }
           tunnel.errback{ |message|
             STDERR.puts message
             exit 1

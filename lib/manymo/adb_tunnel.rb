@@ -21,7 +21,7 @@ module Manymo
     end
 
     def log_packet(prefix, pkt)
-      puts prefix + ": " + pkt.to_s
+      #puts prefix + ": " + pkt.to_s
     end
 
     # Packet from local socket out to websocket
