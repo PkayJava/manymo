@@ -3,14 +3,15 @@ require "uri"
 
 module Manymo
   class Service
-    BASE_URL="https://devwww.manymo.com/api/v1"
+    HOST= ENV["MANYMO_API_HOST"] || "www.manymo.com"
+    BASE_URL="https://#{HOST}/api/v1"
     def get_auth_token(force = false)
       manymo_config_dir = File.expand_path('~/.manymo')
       auth_token_path = manymo_config_dir + '/auth_token'
       if ! force and File.exists?(auth_token_path)
         return File.read(auth_token_path)
       else
-        print "Please visit https://www.manymo.com/user/client_applications to get your authorization token. Enter it here: "
+        print "Please visit https://#{HOST}/user/client_applications to get your authorization token. Enter it here: "
         STDOUT.flush
         auth_token = STDIN.gets.chomp
         if auth_token.empty?

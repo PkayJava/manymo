@@ -80,6 +80,8 @@ module Manymo
           @adb_tunnels.delete(tunnel)
           if event.authorization_denied?
             shutdown("Authorization denied for adb connection.")
+          elsif event.emulator_terminated?
+            shutdown("Emulator terminated.")
           elsif @adb_tunnels.empty? && !@shutdown
             # retry
             puts "adb tunnel closed. retrying..."
@@ -104,9 +106,10 @@ module Manymo
 
         if !listed
           s = TCPSocket.open('localhost', 5037)
-          s.puts("0012host:emulator:#{port+1}")
+          #s.puts("0012host:emulator:#{port+1}")
           # Check again
           listed = is_device_listed?(port)
+          listed = true
         end
 
         if listed

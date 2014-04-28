@@ -14,6 +14,10 @@ module Manymo
     def authorization_denied?
       @reason == :websocket && @websocket_event.code == 4008
     end
+
+    def emulator_terminated?
+      @reason == :websocket && @websocket_event.code == 4009
+    end
   end
 
 end
