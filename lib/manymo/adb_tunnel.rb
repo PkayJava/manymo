@@ -96,7 +96,7 @@ module Manymo
     end
 
     def unbind
-      puts "unbind local adb"
+      #puts "unbind local adb"
       if @onclose
         close_event = TunnelCloseEvent.new(:local)
         @onclose.call(close_event)

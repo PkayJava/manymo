@@ -76,7 +76,7 @@ module Manymo
       EventMachine::start_server '0.0.0.0', local_port+1, ADBTunnel, @server, @display, @password do |tunnel|
         @adb_tunnels << tunnel
         tunnel.onclose { |event|
-          puts "adb closed: #{event}"
+          #puts "adb closed: #{event}"
           @adb_tunnels.delete(tunnel)
           if event.authorization_denied?
             shutdown("Authorization denied for adb connection.")
