@@ -106,7 +106,7 @@ module Manymo
 
         if !listed
           s = TCPSocket.open('localhost', 5037)
-          #s.puts("0012host:emulator:#{port+1}")
+          s.puts("0012host:emulator:#{port+1}")
           # Check again
           listed = is_device_listed?(port)
           listed = true
