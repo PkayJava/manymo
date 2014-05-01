@@ -81,6 +81,7 @@ EOT
 
       def launch(name)
           hostname, emulator_console_port, password = @service.get("/emulators/launch_emulator/#{name}").split(":")
+          puts "Launched #{hostname}:#{emulator_console_port}:#{password}, connecting..."
           start_tunnel(hostname, emulator_console_port, password)
       end
 

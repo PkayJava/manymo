@@ -84,7 +84,7 @@ module Manymo
       end
 
       @ws.on :close do |event|
-        puts "remote adb ws closed connection: #{event.code}"
+        #puts "remote adb ws closed connection: #{event.code}"
         if @onclose
           close_event = TunnelCloseEvent.new(:websocket)
           close_event.websocket_event = event

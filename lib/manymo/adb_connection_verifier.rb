@@ -18,10 +18,9 @@ module Manymo
       def receive_data(data)
         #puts "Client receive data!"
         remainder = @packet.consume(data)
-        while @packet.complete? do
+        if @packet.complete?
           @verifier.succeed
-          @packet = ADBPacket.new
-          remainder = @packet.consume(remainder)
+          close_connection
         end
       end
 
