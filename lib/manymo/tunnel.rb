@@ -102,19 +102,23 @@ module Manymo
         @serial_number = "emulator-#{port}"
 
         # This will start adb server if it isn't started
+        puts "checking adb status"
         listed = is_device_listed?(port)
 
         if !listed
+          puts "Not listed in adb, sending connect packet"
           s = TCPSocket.open('localhost', 5037)
           s.puts("0012host:emulator:#{port+1}")
+          puts "sent, checking again"
           # Check again
           listed = is_device_listed?(port)
-          listed = true
+          puts "listed = #{listed}"
         end
 
         if listed
-          @timeout_timer.cancel if @timeout_timer
           puts "Tunnel established; local serial number is: " + @serial_number
+          @timeout_timer.cancel if @timeout_timer
+          puts "Canceling timeout timer"
         else
           shutdown("Error connecting emulator to adb server.")
         end        

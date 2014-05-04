@@ -47,7 +47,7 @@ EOT
 
         case command
         when /token/
-          get_auth_token(true)
+          AuthToken.get(true)
         when /tunnel/
           args = @argv[1].split(':')
           if args.count == 3
@@ -90,7 +90,7 @@ EOT
           # hit Control + C to stop
           Signal.trap("INT")  { EventMachine.stop }
           Signal.trap("TERM") { EventMachine.stop }
-          EM
+          #puts "Starting tunnel"
           tunnel = Tunnel.new(server, port, password, @adb)
 
           EM.add_shutdown_hook {

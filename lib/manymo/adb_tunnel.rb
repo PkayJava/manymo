@@ -3,7 +3,8 @@ require 'faye'
 module Manymo
   module ADBTunnel
 
-    def initialize(server, display, password)
+    def initialize(server, display, password)      
+      #puts "ADBTunnel initialize"
       @server = server
       @display = display
       @password = password
@@ -17,6 +18,7 @@ module Manymo
     end
 
     def onclose(&blk)
+      #puts "ADBTunnel onclose"
       @onclose = blk
     end
 
@@ -66,7 +68,7 @@ module Manymo
     end
 
     def post_init
-      #puts "opening ws wss://#{@server}/adb_tunnel?display=#{@display}&password=#{@password}"
+      #puts "post_init: opening ws wss://#{@server}/adb_tunnel?display=#{@display}&password=#{@password}"
       @ws = Faye::WebSocket::Client.new("wss://#{@server}/adb_tunnel?display=#{@display}&password=#{@password}", nil, {ping: 10})
       @ws.on :open do
         @connected = true
